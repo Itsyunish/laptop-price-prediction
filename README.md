@@ -63,7 +63,7 @@ laptop_price_prediction/
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/Itsyunish/laptop-price-prediction.git
    cd laptop_price_prediction
    ```
 
