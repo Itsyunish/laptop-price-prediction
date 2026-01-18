@@ -15,7 +15,7 @@ import logging
 
 from src.backend.schema import LaptopSpecs, PredictionResponse, ErrorResponse
 from src.backend.prediction_servies import prediction_service
-from config import API_TITLE, API_VERSION, API_DESCRIPTION
+from src.backend.config import API_TITLE, API_VERSION, API_DESCRIPTION
 
 # Configure logging
 logging.basicConfig(
@@ -126,12 +126,14 @@ async def predict_price(specs: LaptopSpecs):
         HTTPException: If prediction fails
     """
     try:
-        logger.info(f"Received prediction request for {specs.company} {specs.type}")
+        logger.info(
+            f"Received prediction request for {specs.company} {specs.type_name}"
+        )
         
         # Make prediction
         predicted_price = prediction_service.predict(specs)
         
-        # Create response
+        # Create response 
         response = PredictionResponse(
             predicted_price=round(predicted_price, 2),
             currency="USD",
@@ -171,7 +173,7 @@ async def global_exception_handler(request, exc):
 
 if __name__ == "__main__":
     import uvicorn
-    from config import API_HOST, API_PORT
+    from src.backend.config import API_HOST, API_PORT
     
     uvicorn.run(
         "main:app",
