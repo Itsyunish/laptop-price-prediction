@@ -2,9 +2,9 @@
 Streamlit application for Laptop Price Prediction
 """
 
-
 import streamlit as st
 import logging
+import requests
 from typing import Optional 
 
 from src.backend.schema import LaptopSpecs
@@ -39,6 +39,8 @@ def initialize_session_state():
         st.session_state.prediction_made = False
     if 'predicted_price' not in st.session_state:
         st.session_state.predicted_price = None
+    if 'last_specs' not in st.session_state:
+        st.session_state.last_specs = None
 
 
 def load_feature_options():
@@ -48,7 +50,7 @@ def load_feature_options():
     except Exception as e:
         st.error(f"Error loading feature options: {str(e)}")
         logger.error(f"Failed to load features: {str(e)}")
-        st.stop()
+        st.stop() 
 
 
 def create_input_form(options):
@@ -168,9 +170,9 @@ def create_input_form(options):
             try:
                 specs = LaptopSpecs(
                     company=company,
-                    type=laptop_type,
+                    type_name=laptop_type,
                     ram=ram,
-                    weight=weight,
+                    weight=weight, 
                     touchscreen=touchscreen,
                     ips=ips,
                     screen_size=screen_size,
@@ -179,7 +181,7 @@ def create_input_form(options):
                     hdd=hdd,
                     ssd=ssd,
                     gpu=gpu,
-                    os=os
+                    os=os  
                 )
                 return specs
             except Exception as e:
@@ -187,7 +189,7 @@ def create_input_form(options):
                 logger.error(f"Validation error: {str(e)}")
                 return None
         
-        return None
+        return None 
 
 
 def display_prediction(price: float, specs: LaptopSpecs):
@@ -205,7 +207,7 @@ def display_prediction(price: float, specs: LaptopSpecs):
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         st.markdown(
-            f"<h1 style='text-align: center; color: #4CAF50;'>${price:,.2f}</h1>",
+            f"<h1 style='text-align: center; color: #4CAF50;'>{price:,.2f}</h1>",
             unsafe_allow_html=True
         )
         st.markdown(
@@ -220,14 +222,16 @@ def display_prediction(price: float, specs: LaptopSpecs):
         
         with spec_col1:
             st.write(f"**Brand:** {specs.company}")
-            st.write(f"**Type:** {specs.type}")
+            st.write(f"**Type:** {specs.type_name}")
             st.write(f"**CPU:** {specs.cpu}")
-            st.write(f"**GPU:** {specs.gpu}")
+            st.write(f"**GPU:** {specs.gpu}") 
             st.write(f"**RAM:** {specs.ram} GB")
-            st.write(f"**Storage:** {specs.hdd} GB HDD + {specs.ssd} GB SSD")
+            storage_info = f"**Storage:** {specs.hdd} GB HDD + {specs.ssd} GB SSD"
+            st.write(storage_info)
         
         with spec_col2:
-            st.write(f"**Screen:** {specs.screen_size}\" {specs.resolution}")
+            screen_info = f"**Screen:** {specs.screen_size}\" {specs.resolution}"
+            st.write(screen_info)
             st.write(f"**Touchscreen:** {specs.touchscreen}")
             st.write(f"**IPS:** {specs.ips}")
             st.write(f"**Weight:** {specs.weight} kg")
@@ -249,7 +253,7 @@ def main():
     with st.spinner("Loading models..."):
         options = load_feature_options()
     
-    # Sidebar information
+    # Sidebar information 
     with st.sidebar:
         st.header("ℹ️ About")
         st.info(
@@ -261,42 +265,64 @@ def main():
         st.header("📊 Model Info")
         st.write("- **Model Type:** Regression")
         st.write("- **Features:** 12 specifications")
-        st.write("- **Target:** Price (USD)")
+        st.write("- **Target:** Price")
     
     # Create input form and get specifications
     specs = create_input_form(options)
     
     # Make prediction if form was submitted
-    # if specs is not None:
-    #     with st.spinner("Making prediction..."):
-    #         try:
-    #             predicted_price = prediction_service.predict(specs)
-    #             st.session_state.predicted_price = predicted_price
-    #             st.session_state.prediction_made = True
-    #             logger.info(f"Prediction: ${predicted_price:.2f}")
-    #         except Exception as e:
-    #             st.error(f"Prediction failed: {str(e)}")
-    #             logger.error(f"Prediction error: {str(e)}")
-    #             st.session_state.prediction_made = False
     if specs is not None:
         with st.spinner("Making prediction..."):
             try:
-                import requests
+                # Prepare payload
+                payload = specs.model_dump(by_alias=True)
+                logger.info(f"Sending payload: {payload}")
+                
+                # Make API request
                 response = requests.post(
                     "http://localhost:8000/predict",
-                    json=specs.dict()
+                    json=payload,
+                    timeout=10
                 )
                 response.raise_for_status()
-                predicted_price = response.json()["predicted_price"]
+                
+                # Extract prediction
+                result = response.json()
+                predicted_price = result["predicted_price"]
+                
+                # Update session state
+                st.session_state.predicted_price = predicted_price
+                st.session_state.last_specs = specs
+                st.session_state.prediction_made = True
+                
+                logger.info(f"Prediction successful: {predicted_price:.2f}")
+                
+            except requests.exceptions.ConnectionError:
+                st.error("❌ Could not connect to the API. Make sure FastAPI server is running on http://localhost:8000")
+                logger.error("Connection error: API server not reachable")
+                st.session_state.prediction_made = False
+                
+            except requests.exceptions.Timeout:
+                st.error("❌ Request timed out. Please try again.")
+                logger.error("Request timeout")
+                st.session_state.prediction_made = False
+                
+            except requests.exceptions.HTTPError as e:
+                st.error(f"❌ API Error: {e.response.status_code}")
+                if hasattr(e, 'response') and e.response.text:
+                    st.error(f"Details: {e.response.text}")
+                logger.error(f"HTTP error: {str(e)}")
+                st.session_state.prediction_made = False 
+                
             except Exception as e:
-                    st.error(f"Prediction failed: {str(e)}")
-                    logger.error(f"Prediction error: {str(e)}")
-                    st.session_state.prediction_made = False
+                st.error(f"❌ Prediction failed: {str(e)}")
+                logger.error(f"Prediction error: {str(e)}", exc_info=True)
+                st.session_state.prediction_made = False
     
     # Display prediction results
-    if st.session_state.prediction_made and specs is not None:
-        display_prediction(st.session_state.predicted_price, specs)
+    if st.session_state.prediction_made and st.session_state.last_specs is not None:
+        display_prediction(st.session_state.predicted_price, st.session_state.last_specs)
 
 
 if __name__ == "__main__":
-    main() 
+    main()
