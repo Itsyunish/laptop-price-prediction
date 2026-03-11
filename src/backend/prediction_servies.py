@@ -18,11 +18,13 @@ class PredictionService:
 
     @staticmethod
     def calculate_ppi(resolution: str, screen_size: float) -> float:
+        
         x_res, y_res = map(int, resolution.split('x'))
         return ((x_res ** 2 + y_res ** 2) ** 0.5) / screen_size
 
     @staticmethod
     def preprocess_boolean(value: str) -> int:
+        
         return 1 if value == "Yes" else 0
 
     def prepare_features(self, specs: LaptopSpecs) -> pd.DataFrame:
