@@ -88,9 +88,9 @@ async def health_check():
 @app.get("/features", tags=["Features"])
 async def get_features():
     """
-    Get available feature options for prediction
+    Get available feature option for prediction
     
-    Returns available values for categorical features like brands, CPU, GPU, etc.
+    Returns available values for categorical features like brand, CPU, GPU, etc.
     """
     try:
         options = prediction_service.get_feature_options()
