@@ -7,7 +7,7 @@ from typing import Literal
 
 
 class LaptopSpecs(BaseModel):
-    """Schema for laptop specifications input"""
+    """Schema for laptop specification inputs"""
     
     model_config = ConfigDict(
         populate_by_name=True,  # Allows both 'type' and 'type_name'
@@ -31,12 +31,12 @@ class LaptopSpecs(BaseModel):
     )
     
     company: str = Field(..., description="Laptop brand/manufacturer")
-    type_name: str = Field(..., alias="type", description="Type of laptop")  
+    type_name: str = Field(..., alias="type", description="Type of laptops")  
     ram: Literal[2, 4, 6, 8, 12, 16, 24, 32, 64] = Field(..., description="RAM in GB")
     weight: float = Field(..., gt=0, description="Weight of laptop in kg")
     touchscreen: Literal['No', 'Yes'] = Field(..., description="Touchscreen availability")
     ips: Literal['No', 'Yes'] = Field(..., description="IPS display")
-    screen_size: float = Field(..., ge=10.0, le=18.0, description="Screen size in inches")
+    screen_size: float = Field(..., ge=10.0, le=18.0, description="Screen size in inche")
     resolution: str = Field(..., description="Screen resolution (e.g., 1920x1080)")
     cpu: str = Field(..., description="CPU brand")
     hdd: Literal[0, 128, 256, 512, 1024, 2048] = Field(..., description="HDD capacity in GB")
