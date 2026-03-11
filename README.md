@@ -207,7 +207,7 @@ Interactive API documentation is available at:
 - **Swagger UI**: http://localhost:8000/docs
 - **ReDoc**: http://localhost:8000/redoc
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### FastAPI server not starting
 - Ensure port 8000 is not in use
@@ -223,7 +223,7 @@ Interactive API documentation is available at:
 - Check field types match the schema
 - Verify RAM/storage values are from allowed options
 
-## 🙏 Acknowledgments
+## Acknowledgments
 - Dataset source: https://www.kaggle.com/code/nehahatti/laptop-price-prediction/input
 - Inspired by laptop price prediction use cases
 - Built with modern Python web frameworks 
